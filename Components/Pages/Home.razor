@@ -1,0 +1,53 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.SignalR.Client
+@inject NavigationManager Nav
+
+<h3>Railway Chat</h3>
+
+<input @bind="userInput" placeholder="Name" />
+<input @bind="messageInput" placeholder="Message" />
+<button @onclick="Send" disabled="@(!IsConnected)">Send</button>
+
+<ul>
+    @foreach (var msg in messages)
+    {
+        <li>@msg</li>
+    }
+</ul>
+
+@code {
+    private HubConnection? hubConnection;
+    private List<string> messages = new();
+    private string? userInput;
+    private string? messageInput;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // 1. Build the connection
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(Nav.ToAbsoluteUri("/chathub"))
+            .Build();
+
+        // 2. Define what happens when a message is received
+        hubConnection.On<string, string>("ReceiveMessage", (user, message) =>
+        {
+            messages.Add($"{user}: {message}");
+            InvokeAsync(StateHasChanged); // Refresh the UI
+        });
+
+        // 3. Start it up!
+        await hubConnection.StartAsync();
+    }
+
+    private async Task Send()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.SendAsync("SendMessage", userInput, messageInput);
+            messageInput = ""; // Clear input after sending
+        }
+    }
+
+    public bool IsConnected => hubConnection?.State == HubConnectionState.Connected;
+}

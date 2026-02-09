@@ -1,0 +1,34 @@
+## Target directories (Compiled files)
+[Bb]in/
+[Oo]bj/
+out/
+
+## Visual Studio files
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+
+## VS Code files
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+## Secrets and Local Settings
+*.secrets.json
+appsettings.Development.json
+UserSecrets/
+
+## OS generated files
+.DS_Store
+Thumbs.db
+
+## Node.js (If you use LibMan or Tailwind)
+node_modules/
+npm-debug.log*
+
+## Rider/JetBrains
+.idea/
+*.sln.iml
