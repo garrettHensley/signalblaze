@@ -3,7 +3,9 @@
 @using Microsoft.AspNetCore.SignalR.Client
 @inject NavigationManager Nav
 
-<h3>Railway Chat</h3>
+<h3>signal blaze</h3>
+<p><b>Online Now: @userCount</b></p>
+<hr />
 
 <input @bind="userInput" placeholder="Name" />
 <input @bind="messageInput" placeholder="Message" />
@@ -21,6 +23,7 @@
     private List<string> messages = new();
     private string? userInput;
     private string? messageInput;
+    private int userCount = 0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -28,6 +31,13 @@
         hubConnection = new HubConnectionBuilder()
             .WithUrl(Nav.ToAbsoluteUri("/chathub"))
             .Build();
+
+        // Listen for the user count update
+        hubConnection.On<int>("ReceiveUserCount", (count) =>
+        {
+            userCount = count;
+            InvokeAsync(StateHasChanged);
+        });
 
         // 2. Define what happens when a message is received
         hubConnection.On<string, string>("ReceiveMessage", (user, message) =>
