@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.SignalR.Client
 @inject NavigationManager Nav
+@implements IAsyncDisposable
 
 <h3>signal blaze</h3>
 <p><b>Online Now: @userCount</b></p>
@@ -11,14 +12,21 @@
 <input @bind="messageInput" @onkeydown="HandleKeyDown" placeholder="Message" />
 <button @onclick="Send" disabled="@(!IsConnected)">Send</button>
 
-<ul>
-    @foreach (var msg in messages)
-    {
-        <li><span class="user-span">@msg.Key:</span> <span class="msg-span">@msg.Value</span></li>
-    }
-</ul>
+<div id="chat-container">
+    <ul>
+        @foreach (var msg in messages)
+        {
+            <li><span class="user-span">@msg.Key:</span> <span class="msg-span">@msg.Value</span></li>
+        }
+    </ul>
+</div>
 
 <style>
+    #chat-container {
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
     * {
         font-family: "Times New Roman", Times, serif !important;
         font-size: 1.1rem !important;
@@ -60,6 +68,14 @@
     private string? messageInput;
     private int userCount = 0;
 
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
         // 1. Build the connection
@@ -73,6 +89,8 @@
             userCount = count;
             InvokeAsync(StateHasChanged);
         });
+
+
 
         // 2. Define what happens when a message is received
         hubConnection.On<string, string>("ReceiveMessage", (user, message) =>

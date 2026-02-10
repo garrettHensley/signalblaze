@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Components.Server.Circuits;
+using SignalBlaze;
 using SignalBlaze.Components;
 using SignalBlaze.Hubs;
 
@@ -7,7 +9,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(options => {
+    options.KeepAliveInterval = TimeSpan.FromSeconds(10);
+    options.EnableDetailedErrors = true; // Helpful for debugging Railway logs
+});
+
+builder.Services.AddSingleton<ChatPresence>();
+builder.Services.AddSingleton<CircuitHandler, ChatCircuitHandler>();
 
 var app = builder.Build();
 
