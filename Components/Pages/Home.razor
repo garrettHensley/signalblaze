@@ -8,19 +8,54 @@
 <hr />
 
 <input @bind="userInput" placeholder="Name" />
-<input @bind="messageInput" placeholder="Message" />
+<input @bind="messageInput" @onkeydown="HandleKeyDown" placeholder="Message" />
 <button @onclick="Send" disabled="@(!IsConnected)">Send</button>
 
 <ul>
     @foreach (var msg in messages)
     {
-        <li>@msg</li>
+        <li><span class="user-span">@msg.Key:</span> <span class="msg-span">@msg.Value</span></li>
     }
 </ul>
 
+<style>
+    * {
+        font-family: "Times New Roman", Times, serif !important;
+        font-size: 1.1rem !important;
+    }
+
+    h3 {
+        font-size: 1.75rem !important;
+    }
+
+    input, button {
+        padding: 5px 5px !important;
+    }
+
+    html body {
+        background-color: #201533;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        color: #0ce6f2;
+    }
+
+    p {
+        color: #ffffff;
+    }
+
+    .user-span {
+        color: #0098db;
+    }
+    .msg-span {
+        color: #ffffff;
+    }
+
+</style>
+
 @code {
     private HubConnection? hubConnection;
-    private List<string> messages = new();
+    private List<KeyValuePair<string, string>> messages = new();
     private string? userInput;
     private string? messageInput;
     private int userCount = 0;
@@ -42,7 +77,7 @@
         // 2. Define what happens when a message is received
         hubConnection.On<string, string>("ReceiveMessage", (user, message) =>
         {
-            messages.Add($"{user}: {message}");
+            messages.Add(new KeyValuePair<string, string> (user, message));
             InvokeAsync(StateHasChanged); // Refresh the UI
         });
 
@@ -52,7 +87,9 @@
 
     private async Task Send()
     {
-        if (hubConnection is not null)
+        if (hubConnection is not null &&
+        !string.IsNullOrWhiteSpace(userInput) &&
+        !string.IsNullOrWhiteSpace(messageInput))
         {
             await hubConnection.SendAsync("SendMessage", userInput, messageInput);
             messageInput = ""; // Clear input after sending
@@ -60,4 +97,12 @@
     }
 
     public bool IsConnected => hubConnection?.State == HubConnectionState.Connected;
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await Send();
+        }
+    }
 }
