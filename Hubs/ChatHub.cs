@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using SignalBlaze.Services;
 using System.Collections.Concurrent;
 
 namespace SignalBlaze.Hubs
@@ -8,9 +9,16 @@ namespace SignalBlaze.Hubs
         // The "Source of Truth" for who is actually connected right now
         private static ConcurrentDictionary<string, string> OnlineUsers = new();
 
+        private readonly IMessageService _messageService;
+
+        public ChatHub(IMessageService messageService)
+        {
+            _messageService = messageService;
+        }
 
         public async Task SendMessage(string user, string message)
         {
+            _messageService.AddMessage(user, message);
             await Clients.All.SendAsync("ReceiveMessage", user, message);
         }
 
@@ -22,6 +30,8 @@ namespace SignalBlaze.Hubs
 
             await UpdateUserCount();
             await Clients.All.SendAsync("ReceiveMessage", "System", "Someone joined the chat.");
+            var messages = _messageService.GetMessages();
+            await Clients.Caller.SendAsync("ReceiveMessageHistory", messages);
 
             await base.OnConnectedAsync();
         }

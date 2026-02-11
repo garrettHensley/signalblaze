@@ -76,6 +76,12 @@
         }
     }
 
+    private void AddMessage(string user, string message)
+    {
+        messages.Add(new KeyValuePair<string, string> (user, message));
+        InvokeAsync(StateHasChanged); // Refresh the UI
+    }
+
     protected override async Task OnInitializedAsync()
     {
         // 1. Build the connection
@@ -90,6 +96,14 @@
             InvokeAsync(StateHasChanged);
         });
 
+        hubConnection.On<IEnumerable<Message>>("ReceiveMessageHistory", (messageHistory) =>
+        {
+            messageHistory = messageHistory.OrderBy(m => m.DateCreated); // Ensure messages are in chronological order
+            foreach (var msg in messageHistory)
+            {
+                AddMessage(msg.User, msg.Content);
+            }
+        });
 
 
         // 2. Define what happens when a message is received

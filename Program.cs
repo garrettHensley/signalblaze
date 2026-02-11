@@ -2,12 +2,15 @@ using Microsoft.AspNetCore.Components.Server.Circuits;
 using SignalBlaze;
 using SignalBlaze.Components;
 using SignalBlaze.Hubs;
+using SignalBlaze.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddSingleton<IMessageService, MessageService>();
 
 builder.Services.AddSignalR(options => {
     options.KeepAliveInterval = TimeSpan.FromSeconds(10);
