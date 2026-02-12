@@ -28,10 +28,11 @@ namespace SignalBlaze.Hubs
             // and the old one eventually times out/removes.
             OnlineUsers.TryAdd(Context.ConnectionId, "Guest");
 
-            await UpdateUserCount();
-            await Clients.All.SendAsync("ReceiveMessage", "System", "Someone joined the chat.");
             var messages = _messageService.GetMessages();
             await Clients.Caller.SendAsync("ReceiveMessageHistory", messages);
+
+            await UpdateUserCount();
+            await Clients.All.SendAsync("ReceiveMessage", "System", "Someone joined the chat.");
 
             await base.OnConnectedAsync();
         }

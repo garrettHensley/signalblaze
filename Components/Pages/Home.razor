@@ -3,16 +3,21 @@
 @using Microsoft.AspNetCore.SignalR.Client
 @inject NavigationManager Nav
 @implements IAsyncDisposable
+@inject IJSRuntime JS
 
 <h3>signal blaze</h3>
-<p><b>Online Now: @userCount</b></p>
+<marquee>
+    <p><b>Online Now: @userCount</b></p>
+</marquee>
 <hr />
 
-<input @bind="userInput" placeholder="Name" />
-<input @bind="messageInput" @onkeydown="HandleKeyDown" placeholder="Message" />
-<button @onclick="Send" disabled="@(!IsConnected)">Send</button>
 
 <div id="chat-container">
+    <div>
+        <input @bind="userInput" placeholder="Name" maxlength="20" />
+        <input @bind="messageInput" @onkeydown="HandleKeyDown" placeholder="Message" maxlength="@messageLength" />
+        <button @onclick="Send" disabled="@(!IsConnected)">Send</button>
+    </div>
     <ul>
         @foreach (var msg in messages)
         {
@@ -22,9 +27,16 @@
 </div>
 
 <style>
+
     #chat-container {
-        max-height: 60vh;
-        overflow-y: auto;
+        background-color: #1a1c2c;
+        padding: 0.9rem;
+    }
+
+    #chat-container ul {
+        display: flex;
+        flex-direction: column-reverse;
+        list-style-type:  none;
     }
 
     * {
@@ -68,6 +80,8 @@
     private string? messageInput;
     private int userCount = 0;
 
+    private static readonly int messageLength = 100;
+
     public async ValueTask DisposeAsync()
     {
         if (hubConnection is not null)
@@ -107,7 +121,7 @@
 
 
         // 2. Define what happens when a message is received
-        hubConnection.On<string, string>("ReceiveMessage", (user, message) =>
+        hubConnection.On<string, string>("ReceiveMessage", async (user, message) =>
         {
             messages.Add(new KeyValuePair<string, string> (user, message));
             InvokeAsync(StateHasChanged); // Refresh the UI
@@ -123,6 +137,7 @@
         !string.IsNullOrWhiteSpace(userInput) &&
         !string.IsNullOrWhiteSpace(messageInput))
         {
+            messageInput = Utility.Truncate(messageInput, messageLength);
             await hubConnection.SendAsync("SendMessage", userInput, messageInput);
             messageInput = ""; // Clear input after sending
         }
